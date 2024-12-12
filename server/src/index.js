@@ -2,11 +2,17 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const connectDB = require('./config/db');
+const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
 // MongoDB bağlantısı
-connectDB();
+connectDB()
+  .then(() => console.log('✅ MongoDB bağlantısı başarılı'))
+  .catch(err => {
+    console.error('❌ MongoDB bağlantı hatası:', err);
+    process.exit(1);
+  });
 
 // Middleware
 app.use(cors());
@@ -15,6 +21,9 @@ app.use(express.json());
 // Routes
 const productRoutes = require('./routes/products');
 app.use('/api', productRoutes);
+
+// Error handler
+app.use(errorHandler);
 
 // Test route
 app.get('/', (req, res) => {

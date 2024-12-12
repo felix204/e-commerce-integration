@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { addProduct } from '../redux/slice/productSlice';
+import { addProduct } from '@/redux/slice/productSlice';
 
 const ProductForm = () => {
   const dispatch = useDispatch();
@@ -15,7 +15,18 @@ const ProductForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    dispatch(addProduct(formData));
+    try {
+      await dispatch(addProduct(formData)).unwrap();
+      // Form başarıyla gönderildikten sonra formu temizle
+      setFormData({
+        title: '',
+        description: '',
+        price: 0,
+        images: []
+      });
+    } catch (error) {
+      console.error('Ürün ekleme hatası:', error);
+    }
   };
 
   return (
@@ -28,6 +39,7 @@ const ProductForm = () => {
             className="w-full px-3 py-2 border rounded-lg"
             value={formData.title}
             onChange={(e) => setFormData({...formData, title: e.target.value})}
+            required
           />
         </div>
         
@@ -37,6 +49,7 @@ const ProductForm = () => {
             className="w-full px-3 py-2 border rounded-lg"
             value={formData.description}
             onChange={(e) => setFormData({...formData, description: e.target.value})}
+            required
           />
         </div>
 
@@ -47,6 +60,9 @@ const ProductForm = () => {
             className="w-full px-3 py-2 border rounded-lg"
             value={formData.price}
             onChange={(e) => setFormData({...formData, price: Number(e.target.value)})}
+            required
+            min="0"
+            step="0.01"
           />
         </div>
 

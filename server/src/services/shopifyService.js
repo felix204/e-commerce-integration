@@ -26,4 +26,37 @@ const createProduct = async (productData) => {
   }
 };
 
-module.exports = { createProduct }; 
+const updateProduct = async (shopifyId, productData) => {
+  try {
+    const product = await shopify.product.update(shopifyId, {
+      title: productData.title,
+      body_html: productData.description,
+      variants: [
+        {
+          price: productData.price,
+          inventory_quantity: productData.quantity || 1
+        }
+      ]
+    });
+    return product;
+  } catch (error) {
+    console.error('Shopify ürün güncelleme hatası:', error);
+    throw error;
+  }
+};
+
+const deleteProduct = async (shopifyId) => {
+  try {
+    await shopify.product.delete(shopifyId);
+    return true;
+  } catch (error) {
+    console.error('Shopify ürün silme hatası:', error);
+    throw error;
+  }
+};
+
+module.exports = { 
+  createProduct,
+  updateProduct,
+  deleteProduct
+}; 
