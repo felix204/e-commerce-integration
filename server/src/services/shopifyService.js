@@ -1,62 +1,68 @@
 const Shopify = require('shopify-api-node');
+const SHOPIFY_CONSTANTS = require('../constants/shopify');
+const { formatProductForShopify, formatUpdateDataForShopify } = require('../utils/shopifyHelpers');
 
-const shopify = new Shopify({
-  shopName: process.env.SHOPIFY_SHOP_NAME,
-  accessToken: process.env.SHOPIFY_ACCESS_TOKEN,
-});
-
-const createProduct = async (productData) => {
-  try {
-    const product = await shopify.product.create({
-      title: productData.title,
-      body_html: productData.description,
-      vendor: 'Your Store',
-      variants: [
-        {
-          price: productData.price,
-          inventory_quantity: productData.quantity || 1,
-          inventory_management: 'shopify'
-        }
-      ]
+class ShopifyService {
+  constructor() {
+    this.shopify = new Shopify({
+      shopName: process.env.SHOPIFY_SHOP_NAME,
+      accessToken: process.env.SHOPIFY_ACCESS_TOKEN,
+      apiVersion: SHOPIFY_CONSTANTS.API_VERSION
     });
-    return product;
-  } catch (error) {
-    console.error('Shopify ürün ekleme hatası:', error);
-    throw error;
   }
-};
 
-const updateProduct = async (shopifyId, productData) => {
-  try {
-    const product = await shopify.product.update(shopifyId, {
-      title: productData.title,
-      body_html: productData.description,
-      variants: [
-        {
-          price: productData.price,
-          inventory_quantity: productData.quantity || 1
-        }
-      ]
-    });
-    return product;
-  } catch (error) {
-    console.error('Shopify ürün güncelleme hatası:', error);
-    throw error;
+  async createProduct(productData) {
+    try {
+      const shopifyProduct = formatProductForShopify(productData);
+      const result = await this.shopify.product.create(shopifyProduct);
+      return result;
+    } catch (error) {
+      console.error('Shopify ürün oluşturma hatası:', error);
+      throw error;
+    }
   }
-};
 
-const deleteProduct = async (shopifyId) => {
-  try {
-    await shopify.product.delete(shopifyId);
-    return true;
-  } catch (error) {
-    console.error('Shopify ürün silme hatası:', error);
-    throw error;
+  async updateProduct(productId, productData) {
+    try {
+      // Önce mevcut ürünü al
+      const existingProduct = await this.shopify.product.get(productId);
+      const variantId = existingProduct.variants[0].id;
+
+      // Ürün bilgilerini güncelle
+      const updateData = formatUpdateDataForShopify(productData);
+      const updatedProduct = await this.shopify.product.update(productId, updateData);
+
+      // Varyant bilgilerini güncelle
+      await this.shopify.productVariant.update(variantId, {
+        price: productData.price.toString(),
+        inventory_quantity: productData.quantity || 1
+      });
+
+      return updatedProduct;
+    } catch (error) {
+      console.error('Shopify ürün güncelleme hatası:', error);
+      throw error;
+    }
   }
-};
 
-module.exports = { 
-  createProduct,
-  updateProduct,
-  deleteProduct
-}; 
+  async deleteProduct(productId) {
+    try {
+      await this.shopify.product.delete(productId);
+      return { success: true };
+    } catch (error) {
+      console.error('Shopify ürün silme hatası:', error);
+      throw error;
+    }
+  }
+
+  async getProduct(productId) {
+    try {
+      return await this.shopify.product.get(productId);
+    } catch (error) {
+      console.error('Shopify ürün getirme hatası:', error);
+      throw error;
+    }
+  }
+}
+
+module.exports = new ShopifyService(); 

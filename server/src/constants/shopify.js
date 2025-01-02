@@ -1,0 +1,12 @@
+const SHOPIFY_CONSTANTS = {
+  API_VERSION: '2024-01',
+  DEFAULT_VENDOR: 'Your Store Name',
+  DEFAULT_PRODUCT_TYPE: 'Default',
+  INVENTORY_MANAGEMENT: 'shopify',
+  INVENTORY_POLICY: 'continue',
+  FULFILLMENT_SERVICE: 'manual',
+  REQUIRES_SHIPPING: true,
+  TAXABLE: true
+};
+
+module.exports = SHOPIFY_CONSTANTS; 

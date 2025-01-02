@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { addProduct } from '@/redux/slice/productSlice';
+import { addProduct } from '@/api';
 
 const ProductForm = () => {
   const dispatch = useDispatch();

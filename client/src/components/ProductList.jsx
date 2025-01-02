@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProducts, deleteProduct, updateProduct } from '@/redux/slice/productSlice';
+import { fetchProducts, deleteProduct, updateProduct } from '@/api';
 import EditProductModal from './EditProductModal';
 
 const ProductList = () => {

@@ -21,8 +21,15 @@ const EditProductModal = ({ product, isOpen, onClose, onSave }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await onSave(formData);
-    onClose();
+    try {
+      const updatedData = {
+        ...formData,
+        price: Number(formData.price)
+      };
+      await onSave(updatedData);
+    } catch (error) {
+      console.error('Form gönderme hatası:', error);
+    }
   };
 
   if (!isOpen) return null;
@@ -40,6 +47,7 @@ const EditProductModal = ({ product, isOpen, onClose, onSave }) => {
               value={formData.title}
               onChange={(e) => setFormData({...formData, title: e.target.value})}
               className="w-full border rounded px-3 py-2"
+              required
             />
           </div>
           
@@ -49,6 +57,7 @@ const EditProductModal = ({ product, isOpen, onClose, onSave }) => {
               value={formData.description}
               onChange={(e) => setFormData({...formData, description: e.target.value})}
               className="w-full border rounded px-3 py-2"
+              required
             />
           </div>
           
@@ -59,6 +68,9 @@ const EditProductModal = ({ product, isOpen, onClose, onSave }) => {
               value={formData.price}
               onChange={(e) => setFormData({...formData, price: e.target.value})}
               className="w-full border rounded px-3 py-2"
+              required
+              min="0"
+              step="0.01"
             />
           </div>
           

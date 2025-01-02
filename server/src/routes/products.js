@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
-const { createProduct } = require('../services/shopifyService');
+const shopifyController = require('../controllers/shopifyController');
+const trendyolController = require('../controllers/trendyolController');
 
 // Tüm ürünleri getir
 router.get('/products', async (req, res) => {
@@ -13,34 +14,32 @@ router.get('/products', async (req, res) => {
   }
 });
 
-// Yeni ürün ekle
+// Ürün ekleme
 router.post('/products', async (req, res) => {
   try {
-    console.log('Gelen ürün verisi:', req.body); // Debug için
+    // MongoDB'ye ekle
+    const product = new Product(req.body);
+    await product.save();
 
-    // Önce MongoDB'ye ekle
-    const mongoProduct = new Product({
-      title: req.body.title,
-      description: req.body.description,
-      price: req.body.price
-    });
-    
-    await mongoProduct.save();
-    console.log('MongoDB\'ye eklendi:', mongoProduct); // Debug için
+    // Shopify'a ekle
+    try {
+      const shopifyProduct = await shopifyController.createProduct(req.body);
+      product.shopifyId = shopifyProduct.id;
+      await product.save();
+    } catch (shopifyError) {
+      console.error('Shopify hatası:', shopifyError);
+    }
 
-    // Sonra Shopify'a ekle
-    const shopifyProduct = await createProduct(req.body);
-    console.log('Shopify\'a eklendi:', shopifyProduct); // Debug için
+    // Trendyol'a ekle
+    try {
+      const trendyolProduct = await trendyolController.createProduct(req.body);
+      product.trendyolBarcode = trendyolProduct.items[0].barcode;
+      await product.save();
+    } catch (trendyolError) {
+      console.error('Trendyol hatası:', trendyolError);
+    }
 
-    // MongoDB'deki ürünü Shopify ID ile güncelle
-    mongoProduct.shopifyId = shopifyProduct.id;
-    await mongoProduct.save();
-
-    res.status(201).json({
-      success: true,
-      mongoProduct,
-      shopifyProduct
-    });
+    res.status(201).json(product);
   } catch (error) {
     console.error('Ürün ekleme hatası:', error);
     res.status(500).json({ error: error.message });
@@ -71,10 +70,9 @@ router.delete('/products/:id', async (req, res) => {
   }
 });
 
-// Ürün güncelleme endpoint'i
+// Ürün güncelleme
 router.put('/products/:id', async (req, res) => {
   try {
-    // MongoDB'den ürünü bul
     const product = await Product.findById(req.params.id);
     if (!product) {
       return res.status(404).json({ error: 'Ürün bulunamadı' });
@@ -82,33 +80,33 @@ router.put('/products/:id', async (req, res) => {
 
     // Shopify'da güncelle
     if (product.shopifyId) {
-      await shopify.product.update(product.shopifyId, {
-        title: req.body.title,
-        body_html: req.body.description,
-        variants: [
-          {
-            price: req.body.price,
-            inventory_quantity: req.body.quantity || 1
-          }
-        ]
-      });
+      try {
+        await shopifyController.updateProduct(product.shopifyId, req.body);
+      } catch (shopifyError) {
+        console.error('Shopify güncelleme hatası:', shopifyError);
+      }
+    }
+
+    // Trendyol'da güncelle
+    if (product.trendyolBarcode) {
+      try {
+        await trendyolController.updateProduct(product.trendyolBarcode, {
+          ...req.body,
+          barcode: product.trendyolBarcode
+        });
+      } catch (trendyolError) {
+        console.error('Trendyol güncelleme hatası:', trendyolError);
+      }
     }
 
     // MongoDB'de güncelle
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
-      {
-        title: req.body.title,
-        description: req.body.description,
-        price: req.body.price
-      },
+      req.body,
       { new: true }
     );
 
-    res.json({
-      success: true,
-      product: updatedProduct
-    });
+    res.json(updatedProduct);
   } catch (error) {
     console.error('Ürün güncelleme hatası:', error);
     res.status(500).json({ error: error.message });
