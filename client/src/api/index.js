@@ -1,20 +1,20 @@
-import { createAsyncThunk } from '@reduxjs/toolkit';
-
 const API_BASE_URL = 'http://localhost:5000/api';
 
-// Redux Thunks
-export const fetchProducts = createAsyncThunk(
-  'products/fetch',
-  async () => {
+// Ürünleri getir
+export const fetchProductsApi = async () => {
+  try {
     const response = await fetch(`${API_BASE_URL}/products`);
     if (!response.ok) throw new Error('Ürünler getirilemedi');
     return response.json();
+  } catch (error) {
+    console.error('Ürünleri getirme hatası:', error);
+    throw error;
   }
-);
+};
 
-export const addProduct = createAsyncThunk(
-  'products/add',
-  async (productData) => {
+// Yeni ürün ekle
+export const createProductApi = async (productData) => {
+  try {
     const response = await fetch(`${API_BASE_URL}/products`, {
       method: 'POST',
       headers: {
@@ -24,12 +24,15 @@ export const addProduct = createAsyncThunk(
     });
     if (!response.ok) throw new Error('Ürün eklenemedi');
     return response.json();
+  } catch (error) {
+    console.error('Ürün ekleme hatası:', error);
+    throw error;
   }
-);
+};
 
-export const updateProduct = createAsyncThunk(
-  'products/update',
-  async ({ id, productData }) => {
+// Ürün güncelle
+export const updateProductApi = async (id, productData) => {
+  try {
     const response = await fetch(`${API_BASE_URL}/products/${id}`, {
       method: 'PUT',
       headers: {
@@ -39,16 +42,22 @@ export const updateProduct = createAsyncThunk(
     });
     if (!response.ok) throw new Error('Ürün güncellenemedi');
     return response.json();
+  } catch (error) {
+    console.error('Ürün güncelleme hatası:', error);
+    throw error;
   }
-);
+};
 
-export const deleteProduct = createAsyncThunk(
-  'products/delete',
-  async (id) => {
+// Ürün sil
+export const deleteProductApi = async (id) => {
+  try {
     const response = await fetch(`${API_BASE_URL}/products/${id}`, {
       method: 'DELETE',
     });
     if (!response.ok) throw new Error('Ürün silinemedi');
-    return id;
+    return response.json();
+  } catch (error) {
+    console.error('Ürün silme hatası:', error);
+    throw error;
   }
-);
+};

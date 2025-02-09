@@ -16,16 +16,9 @@ const productSchema = new mongoose.Schema({
   shopifyId: {
     type: String
   },
-  trendyolBarcode: {
-    type: String
-  },
   images: [{
     type: String
   }],
-  quantity: {
-    type: Number,
-    default: 1
-  },
   createdAt: {
     type: Date,
     default: Date.now
